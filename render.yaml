@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: proyecto-variabilidad-ventas
+    runtime: static
+    buildCommand: npm ci && npm run validate-config && npm run build
+    staticPublishPath: dist
+    autoDeploy: false # el despliegue lo dispara el pipeline CD (deploy hook)
+    envVars:
+      - key: VITE_APP_VARIANT
+        value: basic # basic | premium
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

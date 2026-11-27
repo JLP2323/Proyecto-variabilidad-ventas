@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { load, save } from '../lib/storage.js';
 import { applyStockDiscount, calculateTotals } from '../lib/sales.js';
+import { FIXTURES, getFixtureName } from '../fixtures/index.js';
 
 const StoreContext = createContext(null);
 
@@ -16,13 +17,18 @@ const SEED_CUSTOMERS = [
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function StoreProvider({ children }) {
-  const [products, setProducts] = useState(() => load('ventas.products', SEED_PRODUCTS));
-  const [customers, setCustomers] = useState(() => load('ventas.customers', SEED_CUSTOMERS));
-  const [sales, setSales] = useState(() => load('ventas.sales', []));
+  // Solo en desarrollo: ?data=worst|empty|one|demo reemplaza los datos en el borde del store
+  // (sin tocar localStorage, para no contaminar los datos reales).
+  const fixtureName = getFixtureName();
+  const fx = fixtureName ? FIXTURES[fixtureName]() : null;
 
-  useEffect(() => save('ventas.products', products), [products]);
-  useEffect(() => save('ventas.customers', customers), [customers]);
-  useEffect(() => save('ventas.sales', sales), [sales]);
+  const [products, setProducts] = useState(() => fx?.products ?? load('ventas.products', SEED_PRODUCTS));
+  const [customers, setCustomers] = useState(() => fx?.customers ?? load('ventas.customers', SEED_CUSTOMERS));
+  const [sales, setSales] = useState(() => fx?.sales ?? load('ventas.sales', []));
+
+  useEffect(() => { if (!fx) save('ventas.products', products); }, [products]);
+  useEffect(() => { if (!fx) save('ventas.customers', customers); }, [customers]);
+  useEffect(() => { if (!fx) save('ventas.sales', sales); }, [sales]);
 
   const addProduct = (p) => setProducts((l) => [...l, { ...p, id: uid() }]);
   const updateProduct = (id, patch) =>
