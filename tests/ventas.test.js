@@ -9,7 +9,7 @@ describe('Ventas: totales e impuestos', () => {
     ]);
     expect(t.subtotal).toBe(109);
     expect(t.iva).toBe(16.35);
-    expect(t.total).toBe(999);
+    expect(t.total).toBe(125.35);
   });
 
   it('aplica descuento antes del IVA cuando se indica', () => {
