@@ -1,0 +1,27 @@
+{
+  "required": ["login", "products", "sales", "customers"],
+  "dependencies": {
+    "export": ["reports"],
+    "discounts": ["sales"]
+  },
+  "variants": {
+    "basic": {
+      "login": true,
+      "products": true,
+      "sales": true,
+      "customers": true,
+      "reports": false,
+      "discounts": false,
+      "export": false
+    },
+    "premium": {
+      "login": true,
+      "products": true,
+      "sales": true,
+      "customers": true,
+      "reports": true,
+      "discounts": true,
+      "export": true
+    }
+  }
+}
