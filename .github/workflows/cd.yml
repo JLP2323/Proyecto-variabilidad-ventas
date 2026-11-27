@@ -1,0 +1,54 @@
+name: CD
+
+# Despliega a producción únicamente en push a main y solo si
+# validación + pruebas + build (job ci-build-test) pasaron al 100 %.
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: cd-main
+  cancel-in-progress: false
+
+jobs:
+  ci-build-test:
+    runs-on: ubuntu-latest
+    env:
+      VITE_APP_VARIANT: ${{ vars.APP_VARIANT || 'basic' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run validate-config
+      - run: npm test
+      - run: npm run build
+
+  deploy:
+    needs: ci-build-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VITE_APP_VARIANT: ${{ vars.APP_VARIANT || 'basic' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Descargar configuración del proyecto
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build para producción
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Desplegar
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
