@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  ci-build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant: [basic, premium]
+    env:
+      VITE_APP_VARIANT: ${{ matrix.variant }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Validar configuración de variantes
+        run: npm run validate-config
+
+      - name: Ejecutar pruebas automatizadas
+        run: npm test
+
+      - name: Compilar proyecto
+        run: npm run build
+
+      - name: Subir dist/ como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.variant }}
+          path: dist/
+          if-no-files-found: error
